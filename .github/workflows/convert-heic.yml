@@ -1,7 +1,6 @@
-name: Convert HEIC to PNG
+name: HEIC to PNG Converter
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -11,6 +10,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,20 +22,37 @@ jobs:
         run: |
           pip install pillow pillow-heif
 
-      - name: Run conversion script
+      - name: Run conversion
         run: |
           python scripts/heic_to_png.py
 
-      - name: Commit changes
+      - name: Configure git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add .
+      - name: Commit changes in batches (SAFE PUSH)
+        run: |
+          git add -A
 
-          if git diff --cached --quiet; then
+          # get all staged files
+          git diff --cached --name-only > changes.txt
+
+          if [ ! -s changes.txt ]; then
             echo "No changes to commit"
-          else
-            git commit -m "Convert HEIC images to PNG"
-            git push
+            exit 0
           fi
+
+          split -l 150 changes.txt chunk_
+
+          for f in chunk_*; do
+            echo "Processing batch: $f"
+
+            git reset
+            cat "$f" | xargs git add
+
+            git commit -m "Convert HEIC to PNG (batch)"
+            
+            # retry push once if it fails
+            git push || (sleep 5 && git push)
+          done
