@@ -31,33 +31,38 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Commit and push in safe batches
+      - name: Commit and push in SMALL batches (ACTUAL FIX)
         run: |
           git add -A
 
-          # get all staged files safely (null-separated)
-          git diff --cached --name-only -z > changes.txt
+          # get staged files safely
+          git diff --cached --name-only -z > all_files.txt
 
-          if [ ! -s changes.txt ]; then
+          if [ ! -s all_files.txt ]; then
             echo "No changes to commit"
             exit 0
           fi
 
-          echo "Splitting into batches..."
+          echo "Batching files safely..."
 
-          # split into chunks (~100KB per batch list)
-          split -b 100k changes.txt chunk_
+          # convert null → newline safely
+          tr '\0' '\n' < all_files.txt > files.txt
+
+          # split into chunks of 50 FILES each (very safe)
+          split -l 50 files.txt chunk_
 
           for f in chunk_*; do
             echo "Processing batch: $f"
 
             git reset
 
-            # safe add (handles quotes, spaces, everything)
-            xargs -0 git add < "$f"
+            # re-add files safely
+            while IFS= read -r file; do
+              git add "$file"
+            done < "$f"
 
             git commit -m "Convert HEIC to PNG (batch)"
 
-            # retry push if it fails
+            # retry push if needed
             git push || (sleep 5 && git push)
           done
