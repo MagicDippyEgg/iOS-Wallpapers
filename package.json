@@ -1,9 +1,9 @@
 {
   "name": "ios-wallpapers-site",
   "private": true,
-  "scripts": {
-    "build": "next build"
-  },
+"scripts": {
+  "build": "node scripts/generate-files.js && next build"
+},
   "dependencies": {
     "next": "14.2.5",
     "react": "18.2.0",
