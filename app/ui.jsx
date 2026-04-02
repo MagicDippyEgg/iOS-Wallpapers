@@ -33,11 +33,14 @@ export default function Client({ files }) {
 
       <h2>1. Device</h2>
       {devices.map(d => (
-        <button key={d} onClick={() => {
-          setDevice(d);
-          setSize(null);
-          setIos(null);
-        }}>
+        <button
+          key={d}
+          onClick={() => {
+            setDevice(d);
+            setSize(null);
+            setIos(null);
+          }}
+        >
           {d}
         </button>
       ))}
@@ -46,10 +49,13 @@ export default function Client({ files }) {
         <>
           <h2>2. Size</h2>
           {sizes.map(s => (
-            <button key={s} onClick={() => {
-              setSize(s);
-              setIos(null);
-            }}>
+            <button
+              key={s}
+              onClick={() => {
+                setSize(s);
+                setIos(null);
+              }}
+            >
               {s}
             </button>
           ))}
@@ -60,7 +66,10 @@ export default function Client({ files }) {
         <>
           <h2>3. iOS Version</h2>
           {iosVersions.map(v => (
-            <button key={v} onClick={() => setIos(v)}>
+            <button
+              key={v}
+              onClick={() => setIos(v)}
+            >
               {v}
             </button>
           ))}
@@ -70,16 +79,25 @@ export default function Client({ files }) {
       {ios && (
         <>
           <h2>Wallpapers</h2>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 10
-          }}>
-            {wallpapers.map(w => (
-              <a key={w} href={`/${w}`} target="_blank">
-                <img src={`/${w}`} style={{ width: "100%" }} />
-              </a>
-            ))}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 10
+            }}
+          >
+            {wallpapers.map(w => {
+              const url = `/api/image?path=${encodeURIComponent(w)}`;
+
+              return (
+                <a key={w} href={url} target="_blank">
+                  <img
+                    src={url}
+                    style={{ width: "100%" }}
+                  />
+                </a>
+              );
+            })}
           </div>
         </>
       )}
