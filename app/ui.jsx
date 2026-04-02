@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import files from "../wallpapers.json";
 
 export default function Client() {
@@ -11,28 +12,22 @@ export default function Client() {
   const devices = [...new Set(files.map(f => f.split("/")[0]))];
 
   const sizes = device
-    ? [...new Set(files
-        .filter(f => f.startsWith(device + "/"))
-        .map(f => f.split("/")[1]))]
+    ? [...new Set(files.filter(f => f.startsWith(device + "/")).map(f => f.split("/")[1]))]
     : [];
 
   const iosVersions = (device && size)
-    ? [...new Set(files
-        .filter(f => f.startsWith(`${device}/${size}/`))
-        .map(f => f.split("/")[2]))]
+    ? [...new Set(files.filter(f => f.startsWith(`${device}/${size}/`)).map(f => f.split("/")[2]))]
     : [];
 
   const wallpapers = (device && size && ios)
-    ? files.filter(f =>
-        f.startsWith(`${device}/${size}/${ios}/Stills/`)
-      )
+    ? files.filter(f => f.startsWith(`${device}/${size}/${ios}/Stills/`))
     : [];
 
   return (
     <div style={{ padding: 20 }}>
       <h1>iOS Wallpapers Navigator</h1>
 
-      <h2>1. Device</h2>
+      <h2>Device</h2>
       {devices.map(d => (
         <button key={d} onClick={() => {
           setDevice(d);
@@ -45,7 +40,7 @@ export default function Client() {
 
       {device && (
         <>
-          <h2>2. Size</h2>
+          <h2>Size</h2>
           {sizes.map(s => (
             <button key={s} onClick={() => {
               setSize(s);
@@ -59,7 +54,7 @@ export default function Client() {
 
       {size && (
         <>
-          <h2>3. iOS Version</h2>
+          <h2>iOS</h2>
           {iosVersions.map(v => (
             <button key={v} onClick={() => setIos(v)}>
               {v}
