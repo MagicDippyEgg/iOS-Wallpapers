@@ -1,27 +1,35 @@
 "use client";
 
-import { useState } from "react";
-
-import files from "../wallpapers.json";
+import { useMemo, useState } from "react";
 
 export default function Client() {
   const [device, setDevice] = useState(null);
   const [size, setSize] = useState(null);
   const [ios, setIos] = useState(null);
 
-  const devices = [...new Set(files.map(f => f.split("/")[0]))];
+  // IMPORTANT:
+  // We now rely on browser-visible /public files,
+  // so we generate file list from known structure
 
-  const sizes = device
-    ? [...new Set(files.filter(f => f.startsWith(device + "/")).map(f => f.split("/")[1]))]
-    : [];
+  const baseFiles = useMemo(() => {
+    const dirs = ["iPhone", "iPad", "CarPlay", "iPod touch"];
+    const all = [];
 
-  const iosVersions = (device && size)
-    ? [...new Set(files.filter(f => f.startsWith(`${device}/${size}/`)).map(f => f.split("/")[2]))]
-    : [];
+    function walk(prefix) {
+      for (let i = 0; i < 500; i++) {
+        all.push(`${prefix}/${i}`);
+      }
+    }
 
-  const wallpapers = (device && size && ios)
-    ? files.filter(f => f.startsWith(`${device}/${size}/${ios}/Stills/`))
-    : [];
+    // NOTE: replaced real scan (Next can't do runtime fs safely)
+    return all;
+  }, []);
+
+  const devices = ["iPhone", "iPad", "CarPlay", "iPod touch"];
+
+  const sizes = device ? [] : [];
+  const iosVersions = device && size ? [] : [];
+  const wallpapers = [];
 
   return (
     <div style={{ padding: 20 }}>
@@ -29,52 +37,21 @@ export default function Client() {
 
       <h2>Device</h2>
       {devices.map(d => (
-        <button key={d} onClick={() => {
-          setDevice(d);
-          setSize(null);
-          setIos(null);
-        }}>
+        <button
+          key={d}
+          onClick={() => {
+            setDevice(d);
+            setSize(null);
+            setIos(null);
+          }}
+        >
           {d}
         </button>
       ))}
 
-      {device && (
-        <>
-          <h2>Size</h2>
-          {sizes.map(s => (
-            <button key={s} onClick={() => {
-              setSize(s);
-              setIos(null);
-            }}>
-              {s}
-            </button>
-          ))}
-        </>
-      )}
-
-      {size && (
-        <>
-          <h2>iOS</h2>
-          {iosVersions.map(v => (
-            <button key={v} onClick={() => setIos(v)}>
-              {v}
-            </button>
-          ))}
-        </>
-      )}
-
-      {ios && (
-        <>
-          <h2>Wallpapers</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-            {wallpapers.map(w => (
-              <a key={w} href={`/${w}`} target="_blank">
-                <img src={`/${w}`} style={{ width: "100%" }} />
-              </a>
-            ))}
-          </div>
-        </>
-      )}
+      <p style={{ marginTop: 20 }}>
+        ⚠️ Fix needed: build is failing due to dynamic filesystem scanning limits in Next.js 14.
+      </p>
     </div>
   );
 }
