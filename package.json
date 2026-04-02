@@ -2,7 +2,7 @@
   "name": "ios-wallpapers-site",
   "private": true,
 "scripts": {
-  "build": "node scripts/generate-files.js && next build"
+  "build": "node scripts/copy-images.js && next build"
 },
   "dependencies": {
     "next": "14.2.5",
