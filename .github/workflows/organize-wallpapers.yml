@@ -1,9 +1,8 @@
 name: Organize Wallpapers
 
+
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   move-folders:
