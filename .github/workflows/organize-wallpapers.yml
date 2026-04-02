@@ -1,0 +1,47 @@
+name: Organize Wallpapers
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  move-folders:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Move wallpaper folders into public
+        run: |
+          mkdir -p public
+
+          if [ -d "CarPlay" ]; then
+            mv CarPlay public/CarPlay
+          fi
+
+          if [ -d "iPad" ]; then
+            mv iPad public/iPad
+          fi
+
+          if [ -d "iPhone" ]; then
+            mv iPhone public/iPhone
+          fi
+
+          if [ -d "iPod touch" ]; then
+            mv "iPod touch" "public/iPod touch"
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add public
+
+          git commit -m "Auto-organize wallpapers into public folder" || echo "No changes to commit"
+
+      - name: Push changes
+        run: |
+          git push
