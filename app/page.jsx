@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const OWNER = "MagicDippyEgg";
 const REPO = "iOS-Wallpapers";
 const BRANCH = "main";
 
-async function fetchRepoTree() {
+async function fetchDir(path = "") {
   const res = await fetch(
-    `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`
+    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`
   );
-  const data = await res.json();
-  return data.tree;
+  return await res.json();
 }
 
 function getImageUrl(path) {
@@ -19,58 +18,45 @@ function getImageUrl(path) {
 }
 
 export default function App() {
-  const [files, setFiles] = useState([]);
+  const [devices, setDevices] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [iosVersions, setIosVersions] = useState([]);
+  const [wallpapers, setWallpapers] = useState([]);
 
   const [device, setDevice] = useState(null);
   const [size, setSize] = useState(null);
   const [ios, setIos] = useState(null);
 
+  // Load devices
   useEffect(() => {
-    fetchRepoTree().then((tree) => {
-      const images = tree
-        .filter(
-          (item) =>
-            item.type === "blob" &&
-            (item.path.endsWith(".png") || item.path.endsWith(".jpg"))
-        )
-        .map((item) => item.path);
-
-      setFiles(images);
+    fetchDir().then((data) => {
+      setDevices(data.filter((d) => d.type === "dir"));
     });
   }, []);
 
-  const devices = useMemo(() => {
-    return [...new Set(files.map((f) => f.split("/")[0]))];
-  }, [files]);
+  // Load sizes
+  useEffect(() => {
+    if (!device) return;
+    fetchDir(device.name).then((data) => {
+      setSizes(data.filter((d) => d.type === "dir"));
+    });
+  }, [device]);
 
-  const sizes = useMemo(() => {
-    if (!device) return [];
-    return [
-      ...new Set(
-        files
-          .filter((f) => f.startsWith(device + "/"))
-          .map((f) => f.split("/")[1])
-      ),
-    ];
-  }, [files, device]);
+  // Load iOS versions
+  useEffect(() => {
+    if (!device || !size) return;
+    fetchDir(`${device.name}/${size.name}`).then((data) => {
+      setIosVersions(data.filter((d) => d.type === "dir"));
+    });
+  }, [device, size]);
 
-  const iosVersions = useMemo(() => {
-    if (!device || !size) return [];
-    return [
-      ...new Set(
-        files
-          .filter((f) => f.startsWith(`${device}/${size}/`))
-          .map((f) => f.split("/")[2])
-      ),
-    ];
-  }, [files, device, size]);
-
-  const wallpapers = useMemo(() => {
-    if (!device || !size || !ios) return [];
-    return files.filter((f) =>
-      f.startsWith(`${device}/${size}/${ios}/Stills/`)
-    );
-  }, [files, device, size, ios]);
+  // Load wallpapers
+  useEffect(() => {
+    if (!device || !size || !ios) return;
+    fetchDir(`${device.name}/${size.name}/${ios.name}/Stills`).then((data) => {
+      setWallpapers(data.filter((f) => f.name.endsWith(".png") || f.name.endsWith(".jpg")));
+    });
+  }, [device, size, ios]);
 
   return (
     <div style={{ padding: 20 }}>
@@ -78,12 +64,12 @@ export default function App() {
 
       <h2>1. Device</h2>
       {devices.map((d) => (
-        <button key={d} onClick={() => {
+        <button key={d.name} onClick={() => {
           setDevice(d);
           setSize(null);
           setIos(null);
         }}>
-          {d}
+          {d.name}
         </button>
       ))}
 
@@ -91,11 +77,11 @@ export default function App() {
         <>
           <h2>2. Size</h2>
           {sizes.map((s) => (
-            <button key={s} onClick={() => {
+            <button key={s.name} onClick={() => {
               setSize(s);
               setIos(null);
             }}>
-              {s}
+              {s.name}
             </button>
           ))}
         </>
@@ -105,8 +91,8 @@ export default function App() {
         <>
           <h2>3. iOS Version</h2>
           {iosVersions.map((v) => (
-            <button key={v} onClick={() => setIos(v)}>
-              {v}
+            <button key={v.name} onClick={() => setIos(v)}>
+              {v.name}
             </button>
           ))}
         </>
@@ -115,10 +101,14 @@ export default function App() {
       {ios && (
         <>
           <h2>Wallpapers</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 10
+          }}>
             {wallpapers.map((w) => (
-              <a key={w} href={getImageUrl(w)} target="_blank">
-                <img src={getImageUrl(w)} style={{ width: "100%" }} />
+              <a key={w.path} href={getImageUrl(w.path)} target="_blank">
+                <img src={getImageUrl(w.path)} style={{ width: "100%" }} />
               </a>
             ))}
           </div>
