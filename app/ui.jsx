@@ -4,10 +4,6 @@ import { useMemo, useState } from "react";
 
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp"]);
 
-function toPublicUrl(file) {
-  return `/${file.split("/").map(encodeURIComponent).join("/")}`;
-}
-
 function parsePathParts(file) {
   const parts = file.split("/");
 
@@ -21,13 +17,11 @@ function parsePathParts(file) {
 
   return {
     file,
-    url: toPublicUrl(file),
     device,
     size,
     ios,
     type,
     name,
-    ext,
     isImage: IMAGE_EXTENSIONS.has(ext)
   };
 }
@@ -37,15 +31,19 @@ export default function Client({ files = [] }) {
   const [size, setSize] = useState(null);
   const [ios, setIos] = useState(null);
 
-  const items = useMemo(() => files.map(parsePathParts).filter(Boolean), [files]);
+  const items = useMemo(() => {
+    return files.map(parsePathParts).filter(Boolean);
+  }, [files]);
 
-  const devices = useMemo(
-    () => [...new Set(items.map((x) => x.device))].sort((a, b) => a.localeCompare(b)),
-    [items]
-  );
+  const devices = useMemo(() => {
+    return [...new Set(items.map((x) => x.device))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [items]);
 
   const sizes = useMemo(() => {
     if (!device) return [];
+
     return [...new Set(items.filter((x) => x.device === device).map((x) => x.size))].sort(
       (a, b) => a.localeCompare(b)
     );
@@ -164,11 +162,15 @@ export default function Client({ files = [] }) {
             {wallpapers.map((w) => (
               <article
                 key={w.file}
-                style={{ border: "1px solid #e6e6e6", borderRadius: 12, padding: 8 }}
+                style={{
+                  border: "1px solid #e6e6e6",
+                  borderRadius: 12,
+                  padding: 8
+                }}
               >
                 {w.isImage ? (
                   <img
-                    src={w.url}
+                    src={`/api/image?path=${encodeURIComponent(w.file)}`}
                     alt={w.name}
                     loading="lazy"
                     style={{
@@ -186,8 +188,8 @@ export default function Client({ files = [] }) {
                     style={{ width: "100%", borderRadius: 8, background: "#000" }}
                   >
                     <source
-                      src={w.url}
-                      type={w.ext === "mov" ? "video/quicktime" : "video/mp4"}
+                      src={`/api/image?path=${encodeURIComponent(w.file)}`}
+                      type="video/mp4"
                     />
                   </video>
                 )}
