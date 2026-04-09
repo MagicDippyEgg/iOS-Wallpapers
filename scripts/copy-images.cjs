@@ -6,6 +6,7 @@ const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
 const sourceDirs = ["iPhone", "iPad", "CarPlay", "iPod touch"];
 const outDir = path.join(process.cwd(), "public");
+const isVercelBuild = process.env.VERCEL === "1";
 
 function hasCgbiChunk(fileBuffer) {
   if (fileBuffer.length < 8 || !fileBuffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
@@ -194,9 +195,28 @@ function copyDir(src, dest, stats) {
   }
 }
 
+function removePathIfExists(targetPath) {
+  if (!fs.existsSync(targetPath)) {
+    return;
+  }
+
+  fs.rmSync(targetPath, { recursive: true, force: true });
+}
+
 const stats = { converted: 0 };
 for (const dir of sourceDirs) {
   copyDir(dir, path.join(outDir, dir), stats);
 }
 
+if (isVercelBuild) {
+  for (const dir of sourceDirs) {
+    removePathIfExists(path.join(process.cwd(), dir));
+  }
+  removePathIfExists(path.join(process.cwd(), ".git"));
+}
+
 console.log(`Copied wallpapers into /public (converted ${stats.converted} legacy CgBI PNGs)`);
+
+if (isVercelBuild) {
+  console.log("Vercel build detected: cleaned source wallpaper folders and .git to reduce disk usage.");
+}

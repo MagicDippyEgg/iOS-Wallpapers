@@ -3,6 +3,7 @@ import path from "path";
 import Client from "./ui";
 
 const ROOT = process.cwd();
+const PUBLIC_ROOT = path.join(ROOT, "public");
 const WALLPAPER_DIRS = ["iPhone", "iPad", "iPod touch", "CarPlay"];
 const SUPPORTED_EXTENSIONS = new Set([
   ".png",
@@ -32,13 +33,13 @@ function getAllWallpapers() {
         continue;
       }
 
-      const rel = path.relative(ROOT, full).replace(/\\/g, "/");
-      results.push(rel);
+      const relFromPublic = path.relative(PUBLIC_ROOT, full).replace(/\\/g, "/");
+      results.push(relFromPublic);
     }
   }
 
   for (const dir of WALLPAPER_DIRS) {
-    const absoluteDir = path.join(ROOT, dir);
+    const absoluteDir = path.join(PUBLIC_ROOT, dir);
     if (fs.existsSync(absoluteDir)) {
       walk(absoluteDir);
     }
